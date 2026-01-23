@@ -363,7 +363,7 @@ func (m *Manager) logDeviceLine(line []byte) {
 	if text == "" {
 		return
 	}
-	m.logger.Info("device", "line", text)
+	m.logger.Info(text)
 }
 
 func (m *Manager) writePacketWithTimeout(port serial.Port, packet []byte) error {
