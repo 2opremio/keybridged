@@ -1,4 +1,4 @@
-package usbbridge
+package client
 
 import (
 	"bytes"

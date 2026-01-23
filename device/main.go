@@ -20,19 +20,19 @@ const (
 	defaultVID         = 0x0403
 	defaultPID         = 0x6001
 	defaultBaudRate    = 115200
-	usbbridgePacketLen = 5
+	keybridgePacketLen = 5
 	defaultWriteQueue  = 1
 	maxLogLineBytes    = 16384
 )
 
 const (
-	usbbridgeTypeKeyboard = 0x00
-	usbbridgeTypeConsumer = 0x01
-	usbbridgeTypeVendor   = 0x02
-	usbbridgeReleaseFlag  = 0x80
+	keybridgeTypeKeyboard = 0x00
+	keybridgeTypeConsumer = 0x01
+	keybridgeTypeVendor   = 0x02
+	keybridgeReleaseFlag  = 0x80
 )
 
-var errDeviceNotFound = errors.New("usbbridge device not found")
+var errDeviceNotFound = errors.New("USB serial adapter not found")
 
 type Manager struct {
 	mu       sync.Mutex
@@ -45,7 +45,7 @@ type Manager struct {
 	vid      uint16
 	pid      uint16
 
-	writeCh chan [usbbridgePacketLen]byte
+	writeCh chan [keybridgePacketLen]byte
 }
 
 type Config struct {
@@ -57,14 +57,14 @@ type Config struct {
 func NewManager(config Config) *Manager {
 	manager := &Manager{
 		stopCh:  make(chan struct{}),
-		writeCh: make(chan [usbbridgePacketLen]byte, defaultWriteQueue),
+		writeCh: make(chan [keybridgePacketLen]byte, defaultWriteQueue),
 	}
 	if config.Logger != nil {
 		manager.logger = config.Logger
 	} else {
 		manager.logger = slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{}))
 	}
-	manager.logger = manager.logger.With("component", "usbbridge")
+	manager.logger = manager.logger.With("component", "device")
 	manager.vid = config.VID
 	manager.pid = config.PID
 	if manager.vid == 0 {
@@ -81,14 +81,14 @@ func NewManager(config Config) *Manager {
 
 func (m *Manager) SendKeyboard(ctx context.Context, keyCode uint16, modifier byte, flags byte, release bool) error {
 	if m.currentPort() == nil {
-		return fmt.Errorf("usbbridge not connected")
+		return fmt.Errorf("keybridge not connected")
 	}
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	typeByte := byte(usbbridgeTypeKeyboard)
+	typeByte := byte(keybridgeTypeKeyboard)
 	if release {
-		typeByte |= usbbridgeReleaseFlag
+		typeByte |= keybridgeReleaseFlag
 	}
 	packet := buildPacket(typeByte, keyCode, modifier, flags)
 	return m.enqueuePacket(ctx, packet)
@@ -96,14 +96,14 @@ func (m *Manager) SendKeyboard(ctx context.Context, keyCode uint16, modifier byt
 
 func (m *Manager) SendConsumer(ctx context.Context, usage uint16, release bool) error {
 	if m.currentPort() == nil {
-		return fmt.Errorf("usbbridge not connected")
+		return fmt.Errorf("keybridge not connected")
 	}
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	typeByte := byte(usbbridgeTypeConsumer)
+	typeByte := byte(keybridgeTypeConsumer)
 	if release {
-		typeByte |= usbbridgeReleaseFlag
+		typeByte |= keybridgeReleaseFlag
 	}
 	packet := buildPacket(typeByte, usage, 0, 0)
 	return m.enqueuePacket(ctx, packet)
@@ -111,32 +111,32 @@ func (m *Manager) SendConsumer(ctx context.Context, usage uint16, release bool) 
 
 func (m *Manager) SendVendor(ctx context.Context, usage uint16, release bool) error {
 	if m.currentPort() == nil {
-		return fmt.Errorf("usbbridge not connected")
+		return fmt.Errorf("keybridge not connected")
 	}
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	typeByte := byte(usbbridgeTypeVendor)
+	typeByte := byte(keybridgeTypeVendor)
 	if release {
-		typeByte |= usbbridgeReleaseFlag
+		typeByte |= keybridgeReleaseFlag
 	}
 	packet := buildPacket(typeByte, usage, 0, 0)
 	return m.enqueuePacket(ctx, packet)
 }
 
-func (m *Manager) enqueuePacket(ctx context.Context, packet [usbbridgePacketLen]byte) error {
+func (m *Manager) enqueuePacket(ctx context.Context, packet [keybridgePacketLen]byte) error {
 	select {
 	case m.writeCh <- packet:
 		return nil
 	case <-m.stopCh:
-		return fmt.Errorf("usbbridge closed")
+		return fmt.Errorf("keybridge closed")
 	case <-ctx.Done():
-		return fmt.Errorf("usbbridge send canceled: %w", ctx.Err())
+		return fmt.Errorf("keybridge send canceled: %w", ctx.Err())
 	}
 }
 
-func buildPacket(typeByte byte, code uint16, modifier byte, flags byte) [usbbridgePacketLen]byte {
-	return [usbbridgePacketLen]byte{
+func buildPacket(typeByte byte, code uint16, modifier byte, flags byte) [keybridgePacketLen]byte {
+	return [keybridgePacketLen]byte{
 		typeByte,
 		byte(code & 0xFF),
 		byte((code >> 8) & 0xFF),
@@ -242,7 +242,7 @@ func (m *Manager) handleConnectError(err error, lastErr string, loggedNotFound b
 	errMsg := err.Error()
 	if errors.Is(err, errDeviceNotFound) {
 		if !loggedNotFound {
-			m.logger.Warn("device not found", "vid", fmt.Sprintf("0x%04X", m.vid), "pid", fmt.Sprintf("0x%04X", m.pid))
+			m.logger.Warn("USB serial adapter not found", "vid", fmt.Sprintf("0x%04X", m.vid), "pid", fmt.Sprintf("0x%04X", m.pid))
 			loggedNotFound = true
 		}
 	} else if errMsg != lastErr {
@@ -342,7 +342,7 @@ func (m *Manager) flushTruncatedLine(state *logLineState) {
 	m.logDeviceLine(state.buffer.Bytes())
 	state.buffer.Reset()
 	if !state.truncated {
-		m.logger.Warn("usbbridge device log line too long, truncated", "max_bytes", maxLogLineBytes)
+		m.logger.Warn("device log line too long, truncated", "max_bytes", maxLogLineBytes)
 		state.truncated = true
 	}
 }
@@ -360,13 +360,13 @@ func (m *Manager) logDeviceLine(line []byte) {
 	if text == "" {
 		return
 	}
-	m.logger.Info("usbbridge device", "line", text)
+	m.logger.Info("device", "line", text)
 }
 
 func (m *Manager) writePacketWithTimeout(port serial.Port, packet []byte) error {
 	if _, err := port.Write(packet); err != nil {
 		m.disconnectWithLog(err)
-		return fmt.Errorf("usbbridge write failed: %w", err)
+		return fmt.Errorf("device write failed: %w", err)
 	}
 	return nil
 }
@@ -396,11 +396,11 @@ func (m *Manager) writePacket(port serial.Port, packet []byte) error {
 	m.mu.Lock()
 	if m.port == nil || m.port != port {
 		m.mu.Unlock()
-		return fmt.Errorf("usbbridge port not connected")
+		return fmt.Errorf("keybridge port not connected")
 	}
 	m.mu.Unlock()
-	if len(packet) != usbbridgePacketLen {
-		return fmt.Errorf("invalid usbbridge packet length: %d", len(packet))
+	if len(packet) != keybridgePacketLen {
+		return fmt.Errorf("invalid keybridge packet length: %d", len(packet))
 	}
 	m.writeMu.Lock()
 	defer m.writeMu.Unlock()
@@ -444,7 +444,19 @@ func (m *Manager) openPortWithRetry(portName string) (serial.Port, error) {
 		time.Sleep(delay)
 		delay += 150 * time.Millisecond
 	}
-	return nil, fmt.Errorf("open usbbridge port %q after %d attempts: %w", portName, maxAttempts, lastErr)
+	return nil, fmt.Errorf("open USB serial port %q after %d attempts: %s", portName, maxAttempts, formatPortError(lastErr))
+}
+
+func formatPortError(err error) string {
+	if err == nil {
+		return "unknown error"
+	}
+	errText := err.Error()
+	if strings.Contains(errText, "%!w(<nil>)") {
+		errText = strings.ReplaceAll(errText, "%!w(<nil>)", "unknown error")
+		errText = strings.TrimSpace(errText)
+	}
+	return errText
 }
 
 func (m *Manager) setPort(port serial.Port, name string) {

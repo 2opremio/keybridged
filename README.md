@@ -16,6 +16,12 @@ and https://github.com/2opremio/NordicBTKeyBridge.
 go run ./cmd/keybridged
 ```
 
+macOS deployment:
+
+```
+./scripts/deploy_macos.sh
+```
+
 Flags:
 
 - `-host` (default: `localhost`)
@@ -53,7 +59,7 @@ Request body:
   - `"keyboard"`: standard key presses (letters, numbers, modifiers, function keys).
   - `"consumer"`: media/system controls (volume, play/pause, keyboard layout toggle).
   - `"vendor"`: device-specific usages (depends on host support).
-- `code` is a USB HID Usage ID for `keyboard`, or a 16-bit usage for `consumer`/`vendor`.
+- `code` is a HID Usage ID for `keyboard`, or a 16-bit usage for `consumer`/`vendor`.
   For `keyboard`, `code: 0` means "modifier-only" (no key pressed).
 - Keyboard modifiers (optional, macOS symbols/Apple names):
   - `left_ctrl` (Ctrl), `left_shift` (Shift), `left_alt`/Option, `left_gui`/Command
@@ -107,13 +113,17 @@ curl -X POST "http://localhost:8080/pressandrelease" \
 There is a small Go client in `client/` for calling the HTTP API.
 
 ```
-client := usbbridge.New(usbbridge.Config{
+package main
+
+import "github.com/2opremio/keybridged/client"
+
+kbClient := client.New(client.Config{
 	Host: "localhost:8080",
 })
-err := client.SendPressAndRelease(ctx, usbbridge.PressAndReleaseRequest{
+err := kbClient.SendPressAndRelease(ctx, client.PressAndReleaseRequest{
 	Type: "keyboard",
 	Code: 0x04,
-	Modifiers: &usbbridge.PressAndReleaseModifiers{
+	Modifiers: &client.PressAndReleaseModifiers{
 		LeftShift: true,
 	},
 }) // A with Shift
