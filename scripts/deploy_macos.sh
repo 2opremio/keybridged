@@ -1,4 +1,4 @@
-#!/bin/bash
+ #!/bin/bash
 
 set -e
 
@@ -53,8 +53,13 @@ EOF
 chmod 644 "$PLIST_PATH"
 
 echo "Loading and starting service..."
-launchctl bootstrap "$SERVICE_DOMAIN" "$PLIST_PATH"
-launchctl kickstart -k "$SERVICE_DOMAIN/$SERVICE_ID"
+if launchctl bootstrap "$SERVICE_DOMAIN" "$PLIST_PATH"; then
+    launchctl kickstart -k "$SERVICE_DOMAIN/$SERVICE_ID"
+else
+    echo "Bootstrap failed, trying legacy launchctl load..."
+    launchctl load -w "$PLIST_PATH"
+    launchctl start "$SERVICE_ID"
+fi
 
 echo "Service started successfully!"
 echo ""

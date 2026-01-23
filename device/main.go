@@ -17,8 +17,8 @@ import (
 )
 
 const (
-	defaultVID         = 0x0403
-	defaultPID         = 0x6001
+	DefaultVID         = 0x1915
+	DefaultPID         = 0x521F
 	defaultBaudRate    = 115200
 	keybridgePacketLen = 5
 	defaultWriteQueue  = 1
@@ -46,6 +46,10 @@ type Manager struct {
 	pid      uint16
 
 	writeCh chan [keybridgePacketLen]byte
+	openFailureCount int
+	openFailuresMuted bool
+	lastFoundPort string
+	lastFound     bool
 }
 
 type Config struct {
@@ -68,10 +72,10 @@ func NewManager(config Config) *Manager {
 	manager.vid = config.VID
 	manager.pid = config.PID
 	if manager.vid == 0 {
-		manager.vid = defaultVID
+		manager.vid = DefaultVID
 	}
 	if manager.pid == 0 {
-		manager.pid = defaultPID
+		manager.pid = DefaultPID
 	}
 	manager.wg.Go(manager.reconnectLoop)
 	manager.wg.Go(manager.deviceLogReadLoop)
@@ -241,12 +245,11 @@ func (m *Manager) reconnectLoop() {
 func (m *Manager) handleConnectError(err error, lastErr string, loggedNotFound bool) (string, bool) {
 	errMsg := err.Error()
 	if errors.Is(err, errDeviceNotFound) {
-		if !loggedNotFound {
-			m.logger.Warn("USB serial adapter not found", "vid", fmt.Sprintf("0x%04X", m.vid), "pid", fmt.Sprintf("0x%04X", m.pid))
-			loggedNotFound = true
-		}
+		loggedNotFound = true
 	} else if errMsg != lastErr {
-		m.logger.Warn("connect failed", "error", err)
+		if m.shouldLogConnectError(errMsg) {
+			m.logger.Warn("connect failed", "error", err)
+		}
 	}
 	return errMsg, loggedNotFound
 }
@@ -386,9 +389,29 @@ func (m *Manager) findPort() (string, error) {
 		if !strings.EqualFold(port.VID, expectedVID) || !strings.EqualFold(port.PID, expectedPID) {
 			continue
 		}
+		shouldLog := false
+		m.mu.Lock()
+		if !m.lastFound || m.lastFoundPort != port.Name {
+			shouldLog = true
+		}
+		m.lastFound = true
+		m.lastFoundPort = port.Name
+		m.mu.Unlock()
+		if shouldLog {
+			m.logger.Info("USB serial adapter found", "port", port.Name, "vid", fmt.Sprintf("0x%04X", m.vid), "pid", fmt.Sprintf("0x%04X", m.pid))
+		}
 		return port.Name, nil
 	}
 
+	m.mu.Lock()
+	wasFound := m.lastFound
+	m.lastFound = false
+	m.lastFoundPort = ""
+	m.mu.Unlock()
+	if wasFound {
+		m.logger.Warn("USB serial adapter not found", "vid", fmt.Sprintf("0x%04X", m.vid), "pid", fmt.Sprintf("0x%04X", m.pid))
+		m.resetOpenFailureLog()
+	}
 	return "", fmt.Errorf("%w (vid=0x%04X pid=0x%04X)", errDeviceNotFound, m.vid, m.pid)
 }
 
@@ -428,6 +451,7 @@ func (m *Manager) connect() error {
 	}
 	m.setPort(port, portName)
 	m.logger.Info("connected", "port", portName)
+	m.resetOpenFailureLog()
 	return nil
 }
 
@@ -440,6 +464,7 @@ func (m *Manager) openPortWithRetry(portName string) (serial.Port, error) {
 		if err == nil {
 			return port, nil
 		}
+		m.logOpenFailure(portName, err, maxAttempts)
 		lastErr = err
 		time.Sleep(delay)
 		delay += 150 * time.Millisecond
@@ -493,4 +518,61 @@ func (m *Manager) disconnectWithOptions(err error, logError bool) {
 	if logError && !m.isStopped() {
 		m.logger.Warn("disconnected", "error", err)
 	}
+	m.resetOpenFailureLog()
+}
+
+func (m *Manager) logOpenFailure(portName string, err error, maxAttempts int) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if m.openFailureCount < maxAttempts {
+		m.openFailureCount++
+		m.logger.Warn(
+			"USB serial open failed",
+			"port",
+			portName,
+			"attempt",
+			m.openFailureCount,
+			"max_attempts",
+			maxAttempts,
+			"error",
+			formatPortError(err),
+		)
+		if m.openFailureCount == maxAttempts {
+			m.logger.Warn(
+				"USB serial open errors muted until connection or discovery state changes",
+				"port",
+				portName,
+			)
+			m.openFailuresMuted = true
+		}
+		return
+	}
+
+	if m.openFailuresMuted {
+		return
+	}
+	m.openFailuresMuted = true
+	m.logger.Warn(
+	"USB serial open errors muted until connection or discovery state changes",
+		"port",
+		portName,
+	)
+}
+
+func (m *Manager) resetOpenFailureLog() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.openFailureCount = 0
+	m.openFailuresMuted = false
+}
+
+func (m *Manager) shouldLogConnectError(errMsg string) bool {
+	if strings.Contains(errMsg, "open USB serial port") {
+		m.mu.Lock()
+		muted := m.openFailuresMuted
+		m.mu.Unlock()
+		return !muted
+	}
+	return true
 }

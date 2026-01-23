@@ -29,16 +29,14 @@ const (
 	defaultHost         = "localhost"
 	defaultPort         = 8080
 	defaultSendTimeoutS = 2
-	defaultVID          = "0x0403"
-	defaultPID          = "0x6001"
 )
 
 func main() {
 	host := flag.String("host", defaultHost, "Host to bind the HTTP server to")
 	port := flag.Int("port", defaultPort, "Port to bind the HTTP server to")
 	sendTimeoutSeconds := flag.Int("send-timeout", defaultSendTimeoutS, "Seconds to wait when queueing an event")
-	vidFlag := flag.String("vid", defaultVID, "USB VID of the serial adapter (hex)")
-	pidFlag := flag.String("pid", defaultPID, "USB PID of the serial adapter (hex)")
+	vidFlag := flag.String("vid", fmt.Sprintf("0x%04X", device.DefaultVID), "USB VID of the serial adapter (hex)")
+	pidFlag := flag.String("pid", fmt.Sprintf("0x%04X", device.DefaultPID), "USB PID of the serial adapter (hex)")
 	flag.Parse()
 
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{}))
@@ -54,6 +52,7 @@ func main() {
 		logger.Error("invalid PID", "value", *pidFlag, "error", err)
 		os.Exit(1)
 	}
+	logger.Info("looking for USB serial adapter", "vid", fmt.Sprintf("0x%04X", vid), "pid", fmt.Sprintf("0x%04X", pid))
 
 	manager := device.NewManager(device.Config{
 		Logger: logger,
