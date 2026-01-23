@@ -1,7 +1,8 @@
 # keybridged
 
-keybridged is a Go HTTP daemon that sends key events to hardware bridges over UART.
-It is the companion backend for bridges like https://github.com/2opremio/PicoUSBKeyBridge.
+keybridged is a Go HTTP daemon that sends key events to hardware bridges over UART or USB CDC.
+It is the companion backend for bridges like https://github.com/2opremio/PicoUSBKeyBridge
+and https://github.com/2opremio/NordicBTKeyBridge.
 
 ## What it does
 
