@@ -15,17 +15,6 @@ It is the companion backend for bridges like https://github.com/2opremio/PicoUSB
 go run ./cmd/keybridged
 ```
 
-macOS deployment:
-
-```
-./scripts/deploy_macos.sh
-```
-
-Other systems:
-
-- Linux: use `systemd` (not included yet).
-- Windows: TBD.
-
 Flags:
 
 - `-host` (default: `localhost`)
@@ -129,8 +118,6 @@ err := client.SendPressAndRelease(ctx, usbbridge.PressAndReleaseRequest{
 }) // A with Shift
 ```
 
-## Scripts
+## Serial protocol details
 
-- `fn_k.sh`, `fn_k_toggle.sh`, `fn_only.sh`: send Apple Fn sequences.
-- `keyboard_layout_toggle.sh`: send consumer control to toggle the on-screen keyboard.
-- `helloworld.sh`: type "HELLO WORLD!" through the HTTP API.
+Serial protocol documentation lives in https://github.com/2opremio/PicoUSBKeyBridge.
