@@ -28,13 +28,13 @@ Flags:
 - `-port` (default: `8080`)
 - `-send-timeout` (default: `2`) seconds to wait when queueing an event
 - `-vid` (default: `0x1915`) USB VID for the serial adapter
-- `-pid` (default: `0x521F`) USB PID for the serial adapter
+- `-pid` (default: `0x520F`) USB PID for the serial adapter
 
 If you are using a different bridge firmware (or a non-default USB descriptor),
-pass `-vid`/`-pid` explicitly. Example (FT232 default):
+pass `-vid`/`-pid` explicitly. Example (Nordic nRF52840 CDC setup):
 
 ```
-./keybridged -vid 0x0403 -pid 0x6001
+./keybridged -vid 0x1915 -pid 0x520F
 ```
 
 ## HTTP API

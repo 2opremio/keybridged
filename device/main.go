@@ -18,7 +18,7 @@ import (
 
 const (
 	DefaultVID         = 0x1915
-	DefaultPID         = 0x521F
+	DefaultPID         = 0x520F
 	defaultBaudRate    = 115200
 	keybridgePacketLen = 5
 	defaultWriteQueue  = 1
