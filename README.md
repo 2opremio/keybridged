@@ -1,12 +1,17 @@
 # keybridged
 
 keybridged is a Go HTTP daemon that sends key events to hardware bridges over UART or USB CDC.
-It is the companion backend for bridges like https://github.com/2opremio/PicoUSBKeyBridge
-and https://github.com/2opremio/NordicBTKeyBridge.
+It is the companion backend for bridge firmwares:
+- [PicoUSBKeyBridge](https://github.com/2opremio/PicoUSBKeyBridge) (UART -> USB HID keyboard)
+- [NordicBTKeyBridge](https://github.com/2opremio/NordicBTKeyBridge) (USB CDC -> BLE HID keyboard)
+
+If you’re deciding which bridge to use:
+- **Need a wired USB keyboard** presented to the target host → PicoUSBKeyBridge
+- **Need a Bluetooth LE keyboard** presented to the target host → NordicBTKeyBridge
 
 ## What it does
 
-- Keeps a persistent connection to the USB-to-UART adapter.
+- Keeps a persistent connection to the bridge’s **serial transport** (USB CDC or a USB-to-UART adapter).
 - Retries forever and logs device output to stdout.
 - Exposes a small HTTP API for sending key events.
 
@@ -27,14 +32,23 @@ Flags:
 - `-host` (default: `localhost`)
 - `-port` (default: `8080`)
 - `-send-timeout` (default: `2`) seconds to wait when queueing an event
-- `-vid` (default: `0x1915`) USB VID for the serial adapter
-- `-pid` (default: `0x520F`) USB PID for the serial adapter
+- `-vid` (default: `0x1915`) USB VID for the **serial transport device**
+- `-pid` (default: `0x520F`) USB PID for the **serial transport device**
 
-If you are using a different bridge firmware (or a non-default USB descriptor),
-pass `-vid`/`-pid` explicitly. Example (Nordic nRF52840 CDC setup):
+Note: these flags do **not** refer to the HID keyboard identity (USB HID VID/PID or BLE PnP ID). They are only used to locate the serial device that `keybridged` talks to.
+
+Examples:
+
+- NordicBTKeyBridge (nRF52840 USB CDC, default):
 
 ```
 ./keybridged -vid 0x1915 -pid 0x520F
+```
+
+- PicoUSBKeyBridge using an FT232 USB-to-UART adapter (example hardware):
+
+```
+./keybridged -vid 0x0403 -pid 0x6001
 ```
 
 ## HTTP API
@@ -129,4 +143,4 @@ err := kbClient.SendPressAndRelease(ctx, client.PressAndReleaseRequest{
 
 ## Serial protocol details
 
-Serial protocol documentation lives in https://github.com/2opremio/PicoUSBKeyBridge.
+Serial protocol documentation lives in [PicoUSBKeyBridge](https://github.com/2opremio/PicoUSBKeyBridge).
