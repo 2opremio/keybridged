@@ -86,6 +86,8 @@ Request body:
   - `right_ctrl`, `right_shift`, `right_alt`/Option, `right_gui`/Command
   - `apple_fn` sets the Apple Fn bit in the keyboard report
 
+If there’s demand, we can add a WebSocket API for more efficient key-event streaming than one HTTP request per key, and for real-time device log streaming.
+
 ### Examples
 
 Send letter `A` (`a` (HID code 4) + `Shift`):
