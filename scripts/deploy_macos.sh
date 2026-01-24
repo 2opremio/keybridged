@@ -46,7 +46,7 @@ cat > "$PLIST_PATH" <<EOF
     <key>StandardOutPath</key>
     <string>$HOME/Library/Logs/keybridged.log</string>
     <key>StandardErrorPath</key>
-    <string>$HOME/Library/Logs/keybridged.error.log</string>
+    <string>$HOME/Library/Logs/keybridged.log</string>
 </dict>
 </plist>
 EOF
