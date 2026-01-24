@@ -41,22 +41,18 @@ func New(config Config) *Client {
 // PressAndReleaseModifiers matches the `modifiers` object in the HTTP API.
 // It applies to `Type: "keyboard"` requests (consumer events ignore modifiers).
 type PressAndReleaseModifiers struct {
-	LeftCtrl   bool `json:"left_ctrl,omitempty"`   // Ctrl
-	LeftShift  bool `json:"left_shift,omitempty"`  // Shift
-	LeftAlt    bool `json:"left_alt,omitempty"`    // Alt / Option
-	LeftGUI    bool `json:"left_gui,omitempty"`    // GUI / Command
-	RightCtrl  bool `json:"right_ctrl,omitempty"`  // Ctrl
-	RightShift bool `json:"right_shift,omitempty"` // Shift
-	RightAlt   bool `json:"right_alt,omitempty"`   // Alt / Option
-	RightGUI   bool `json:"right_gui,omitempty"`   // GUI / Command
-	AppleFn    bool `json:"apple_fn,omitempty"`    // Apple Fn/Globe
+	LeftCtrl   bool `json:"left_ctrl,omitempty"`   // ⌃ Ctrl
+	LeftShift  bool `json:"left_shift,omitempty"`  // ⇧ Shift
+	LeftAlt    bool `json:"left_alt,omitempty"`    // ⌥ Option
+	LeftGUI    bool `json:"left_gui,omitempty"`    // ⌘ Command
+	RightCtrl  bool `json:"right_ctrl,omitempty"`  // ⌃ Ctrl
+	RightShift bool `json:"right_shift,omitempty"` // ⇧ Shift
+	RightAlt   bool `json:"right_alt,omitempty"`   // ⌥ Option
+	RightGUI   bool `json:"right_gui,omitempty"`   // ⌘ Command
+	AppleFn    bool `json:"apple_fn,omitempty"`    // Fn/Globe
 }
 
 // PressAndReleaseRequest matches the `POST /pressandrelease` request body.
-//
-// Code values:
-//   - Type "keyboard": USB HID Keyboard/Keypad keycode (8-bit; Code is uint16 for convenience)
-//   - Type "consumer": USB HID Consumer Page (0x0C) usage (16-bit)
 //
 // See the shared serial protocol docs (also includes code references and examples):
 // https://github.com/2opremio/PicoUSBKeyBridge#serial-protocol

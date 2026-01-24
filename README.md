@@ -79,15 +79,13 @@ Request body:
 - `type`:
   - `"keyboard"`: standard key presses (letters, numbers, modifiers, function keys).
   - `"consumer"`: media/system controls (volume, play/pause, keyboard layout toggle).
-- `code` is a HID usage ID:
-  - `keyboard`: USB HID Keyboard/Keypad keycode (8-bit; the JSON field is `uint16` for convenience)
-  - `consumer`: USB HID Consumer Page (0x0C) usage (16-bit)
-  See the on-wire details and code references in the serial protocol docs: [PicoUSBKeyBridge#serial-protocol](https://github.com/2opremio/PicoUSBKeyBridge#serial-protocol).
-  For `keyboard`, `code: 0` means "modifier-only" (no key pressed).
+- `code` is a HID usage ID. See the on-wire details and code references in the serial protocol docs: [PicoUSBKeyBridge#serial-protocol](https://github.com/2opremio/PicoUSBKeyBridge#serial-protocol).
+  - `keyboard`: USB HID Keyboard/Keypad keycode (8-bit; the JSON field is `uint16` for convenience). `code: 0` means "modifier-only" (no key pressed).
+  - `consumer`: USB HID Consumer Page (0x0C) usage (16-bit).
 - Keyboard modifiers (optional, macOS symbols/Apple names):
-  - `left_ctrl` (Ctrl), `left_shift` (Shift), `left_alt`/Option, `left_gui`/Command
-  - `right_ctrl`, `right_shift`, `right_alt`/Option, `right_gui`/Command
-  - `apple_fn` sets the Apple Fn bit in the keyboard report
+  - `left_ctrl` (⌃ Ctrl), `left_shift` (⇧ Shift), `left_alt` (⌥ Option), `left_gui` (⌘ Command)
+  - `right_ctrl` (⌃ Ctrl), `right_shift` (⇧ Shift), `right_alt` (⌥ Option), `right_gui` (⌘ Command)
+  - `apple_fn` (Fn) sets the Apple Fn bit in the keyboard report
 
 If there’s demand, we can add a WebSocket API for more efficient key-event streaming than one HTTP request per key, and for real-time device log streaming.
 
