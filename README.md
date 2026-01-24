@@ -126,7 +126,7 @@ curl -X POST "http://localhost:8080/pressandrelease" \
 
 There is a small Go client in `client/` for calling the HTTP API.
 
-```
+```go
 package main
 
 import "github.com/2opremio/keybridged/client"
