@@ -175,11 +175,6 @@ func sendEvent(ctx context.Context, manager *device.Manager, req client.PressAnd
 			return err
 		}
 		return manager.SendConsumer(ctx, req.Code, true)
-	case "vendor":
-		if err := manager.SendVendor(ctx, req.Code, false); err != nil {
-			return err
-		}
-		return manager.SendVendor(ctx, req.Code, true)
 	default:
 		return fmt.Errorf("invalid type: %s", req.Type)
 	}

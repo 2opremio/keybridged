@@ -28,7 +28,6 @@ const (
 const (
 	keybridgeTypeKeyboard = 0x00
 	keybridgeTypeConsumer = 0x01
-	keybridgeTypeVendor   = 0x02
 	keybridgeReleaseFlag  = 0x80
 )
 
@@ -106,21 +105,6 @@ func (m *Manager) SendConsumer(ctx context.Context, usage uint16, release bool) 
 		ctx = context.Background()
 	}
 	typeByte := byte(keybridgeTypeConsumer)
-	if release {
-		typeByte |= keybridgeReleaseFlag
-	}
-	packet := buildPacket(typeByte, usage, 0, 0)
-	return m.enqueuePacket(ctx, packet)
-}
-
-func (m *Manager) SendVendor(ctx context.Context, usage uint16, release bool) error {
-	if m.currentPort() == nil {
-		return fmt.Errorf("keybridge not connected")
-	}
-	if ctx == nil {
-		ctx = context.Background()
-	}
-	typeByte := byte(keybridgeTypeVendor)
 	if release {
 		typeByte |= keybridgeReleaseFlag
 	}

@@ -46,7 +46,7 @@ Request body:
 
 ```
 {
-  "type": <string> ("keyboard"|"consumer"|"vendor"),
+  "type": <string> ("keyboard"|"consumer"),
   "code": <uint16>,
   "modifiers": {
     "left_ctrl": <bool>,
@@ -65,8 +65,7 @@ Request body:
 - `type`:
   - `"keyboard"`: standard key presses (letters, numbers, modifiers, function keys).
   - `"consumer"`: media/system controls (volume, play/pause, keyboard layout toggle).
-  - `"vendor"`: device-specific usages (depends on host support).
-- `code` is a HID Usage ID for `keyboard`, or a 16-bit usage for `consumer`/`vendor`.
+- `code` is a HID Usage ID for `keyboard`, or a 16-bit usage for `consumer`.
   For `keyboard`, `code: 0` means "modifier-only" (no key pressed).
 - Keyboard modifiers (optional, macOS symbols/Apple names):
   - `left_ctrl` (Ctrl), `left_shift` (Shift), `left_alt`/Option, `left_gui`/Command
@@ -97,14 +96,6 @@ Play/Pause (consumer usage 0x00CD):
 curl -X POST "http://localhost:8080/pressandrelease" \
   -H "Content-Type: application/json" \
   -d '{"type":"consumer","code":205}'
-```
-
-Vendor usage example (0x0001):
-
-```
-curl -X POST "http://localhost:8080/pressandrelease" \
-  -H "Content-Type: application/json" \
-  -d '{"type":"vendor","code":1}'
 ```
 
 Send only Apple Fn (modifier-only, no key):
