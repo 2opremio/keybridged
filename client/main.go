@@ -38,11 +38,13 @@ func New(config Config) *Client {
 	}
 }
 
+// PressAndReleaseModifiers matches the `modifiers` object in the HTTP API.
+// It applies to `Type: "keyboard"` requests (consumer events ignore modifiers).
 type PressAndReleaseModifiers struct {
-	LeftCtrl   bool `json:"left_ctrl,omitempty"`  // Ctrl
-	LeftShift  bool `json:"left_shift,omitempty"` // Shift
-	LeftAlt    bool `json:"left_alt,omitempty"`   // Alt / Option
-	LeftGUI    bool `json:"left_gui,omitempty"`   // GUI / Command
+	LeftCtrl   bool `json:"left_ctrl,omitempty"`   // Ctrl
+	LeftShift  bool `json:"left_shift,omitempty"`  // Shift
+	LeftAlt    bool `json:"left_alt,omitempty"`    // Alt / Option
+	LeftGUI    bool `json:"left_gui,omitempty"`    // GUI / Command
 	RightCtrl  bool `json:"right_ctrl,omitempty"`  // Ctrl
 	RightShift bool `json:"right_shift,omitempty"` // Shift
 	RightAlt   bool `json:"right_alt,omitempty"`   // Alt / Option
@@ -50,9 +52,30 @@ type PressAndReleaseModifiers struct {
 	AppleFn    bool `json:"apple_fn,omitempty"`    // Apple Fn/Globe
 }
 
+// PressAndReleaseRequest matches the `POST /pressandrelease` request body.
+//
+// Code values:
+//   - Type "keyboard": USB HID Keyboard/Keypad keycode (8-bit; Code is uint16 for convenience)
+//   - Type "consumer": USB HID Consumer Page (0x0C) usage (16-bit)
+//
+// See the shared serial protocol docs (also includes code references and examples):
+// https://github.com/2opremio/PicoUSBKeyBridge#serial-protocol
 type PressAndReleaseRequest struct {
-	Type      string                   `json:"type,omitempty"`
-	Code      uint16                   `json:"code"`
+	// Type selects the HID usage page used by Code.
+	// Supported values:
+	//   - "keyboard": USB HID Keyboard/Keypad usage page
+	//   - "consumer": USB HID Consumer Page (0x0C)
+	//
+	// If omitted/empty, the server defaults it to "keyboard".
+	Type string `json:"type,omitempty"`
+
+	// Code is the HID usage for the selected Type.
+	//
+	// For Type "keyboard", Code is an 8-bit USB HID keycode (stored in a uint16 for convenience).
+	// Code=0 is allowed only for modifier-only keyboard events.
+	//
+	// For Type "consumer", Code is a 16-bit Consumer Page (0x0C) usage (e.g. 0x00CD Play/Pause).
+	Code      uint16                    `json:"code"`
 	Modifiers *PressAndReleaseModifiers `json:"modifiers,omitempty"`
 }
 

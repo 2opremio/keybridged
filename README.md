@@ -79,7 +79,10 @@ Request body:
 - `type`:
   - `"keyboard"`: standard key presses (letters, numbers, modifiers, function keys).
   - `"consumer"`: media/system controls (volume, play/pause, keyboard layout toggle).
-- `code` is a HID Usage ID for `keyboard`, or a 16-bit usage for `consumer`.
+- `code` is a HID usage ID:
+  - `keyboard`: USB HID Keyboard/Keypad keycode (8-bit; the JSON field is `uint16` for convenience)
+  - `consumer`: USB HID Consumer Page (0x0C) usage (16-bit)
+  See the on-wire details and code references in the serial protocol docs: [PicoUSBKeyBridge#serial-protocol](https://github.com/2opremio/PicoUSBKeyBridge#serial-protocol).
   For `keyboard`, `code: 0` means "modifier-only" (no key pressed).
 - Keyboard modifiers (optional, macOS symbols/Apple names):
   - `left_ctrl` (Ctrl), `left_shift` (Shift), `left_alt`/Option, `left_gui`/Command
