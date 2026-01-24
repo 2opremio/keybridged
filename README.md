@@ -146,4 +146,4 @@ err := kbClient.SendPressAndRelease(ctx, client.PressAndReleaseRequest{
 
 ## Serial protocol details
 
-Serial protocol documentation lives in [PicoUSBKeyBridge](https://github.com/2opremio/PicoUSBKeyBridge#serial-protocol).
+Serial protocol documentation lives in [PicoUSBKeyBridge#serial-protocol](https://github.com/2opremio/PicoUSBKeyBridge#serial-protocol).
