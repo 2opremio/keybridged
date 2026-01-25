@@ -4,7 +4,7 @@
 
 keybridged is a Go HTTP daemon that sends key events to hardware bridges over UART or USB CDC.
 It is the companion backend for bridge firmwares:
-- [PicoUSBKeyBridge](https://github.com/2opremio/PicoUSBKeyBridge#serial-protocol) (UART -> USB HID keyboard)
+- [PicoUSBKeyBridge](https://github.com/2opremio/PicoUSBKeyBridge) (UART -> USB HID keyboard)
 - [NordicBTKeyBridge](https://github.com/2opremio/NordicBTKeyBridge) (USB CDC -> BLE HID keyboard)
 
 If you’re deciding which bridge to use:
