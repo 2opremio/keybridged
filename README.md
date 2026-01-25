@@ -1,3 +1,5 @@
+[![Go Reference](https://pkg.go.dev/badge/github.com/2opremio/keybridged.svg)](https://pkg.go.dev/github.com/2opremio/keybridged)
+
 # keybridged
 
 keybridged is a Go HTTP daemon that sends key events to hardware bridges over UART or USB CDC.
