@@ -18,7 +18,7 @@ If you’re deciding which bridge to use:
 ## Build and run
 
 ```
-go run github.com/2opremio/keybridged/cmd@latest
+go run github.com/2opremio/keybridged/cmd/keybridged@latest
 ```
 
 macOS deployment:
