@@ -31,7 +31,10 @@ const (
 	keybridgeReleaseFlag  = 0x80
 )
 
-var errDeviceNotFound = errors.New("USB serial adapter not found")
+var (
+	errDeviceNotFound = errors.New("USB serial adapter not found")
+	errUSBOpenFailed  = errors.New("USB serial port open failed")
+)
 
 type Manager struct {
 	mu       sync.Mutex
@@ -44,11 +47,11 @@ type Manager struct {
 	vid      uint16
 	pid      uint16
 
-	writeCh chan [keybridgePacketLen]byte
-	openFailureCount int
+	writeCh           chan [keybridgePacketLen]byte
+	openFailureCount  int
 	openFailuresMuted bool
-	lastFoundPort string
-	lastFound     bool
+	lastFoundPort     string
+	lastFound         bool
 }
 
 type Config struct {
@@ -199,8 +202,6 @@ func (m *Manager) writeWorker() {
 }
 
 func (m *Manager) reconnectLoop() {
-	var lastErr string
-	var loggedNotFound bool
 	for {
 		if m.isStopped() {
 			return
@@ -215,27 +216,22 @@ func (m *Manager) reconnectLoop() {
 		}
 		err := m.connect()
 		if err != nil {
-			lastErr, loggedNotFound = m.handleConnectError(err, lastErr, loggedNotFound)
+			m.handleConnectError(err)
 			if !m.sleepUntilRetry(1 * time.Second) {
 				return
 			}
 			continue
 		}
-		lastErr = ""
-		loggedNotFound = false
 	}
 }
 
-func (m *Manager) handleConnectError(err error, lastErr string, loggedNotFound bool) (string, bool) {
-	errMsg := err.Error()
+func (m *Manager) handleConnectError(err error) {
 	if errors.Is(err, errDeviceNotFound) {
-		loggedNotFound = true
-	} else if errMsg != lastErr {
-		if m.shouldLogConnectError(errMsg) {
-			m.logger.Warn("connect failed", "error", err)
-		}
+		return
 	}
-	return errMsg, loggedNotFound
+	if m.shouldLogConnectError(err) {
+		m.logger.Warn("connect failed", "error", err)
+	}
 }
 
 func (m *Manager) sleepUntilRetry(delay time.Duration) bool {
@@ -453,19 +449,12 @@ func (m *Manager) openPortWithRetry(portName string) (serial.Port, error) {
 		time.Sleep(delay)
 		delay += 150 * time.Millisecond
 	}
-	return nil, fmt.Errorf("open USB serial port %q after %d attempts: %s", portName, maxAttempts, formatPortError(lastErr))
-}
-
-func formatPortError(err error) string {
-	if err == nil {
-		return "unknown error"
-	}
-	errText := err.Error()
-	if strings.Contains(errText, "%!w(<nil>)") {
-		errText = strings.ReplaceAll(errText, "%!w(<nil>)", "unknown error")
-		errText = strings.TrimSpace(errText)
-	}
-	return errText
+	return nil, fmt.Errorf(
+		"open USB serial port %q after %d attempts: %w",
+		portName,
+		maxAttempts,
+		errors.Join(errUSBOpenFailed, lastErr),
+	)
 }
 
 func (m *Manager) setPort(port serial.Port, name string) {
@@ -520,7 +509,7 @@ func (m *Manager) logOpenFailure(portName string, err error, maxAttempts int) {
 			"max_attempts",
 			maxAttempts,
 			"error",
-			formatPortError(err),
+			err.Error(),
 		)
 		if m.openFailureCount == maxAttempts {
 			m.logger.Warn(
@@ -532,16 +521,6 @@ func (m *Manager) logOpenFailure(portName string, err error, maxAttempts int) {
 		}
 		return
 	}
-
-	if m.openFailuresMuted {
-		return
-	}
-	m.openFailuresMuted = true
-	m.logger.Warn(
-	"USB serial open errors muted until connection or discovery state changes",
-		"port",
-		portName,
-	)
 }
 
 func (m *Manager) resetOpenFailureLog() {
@@ -551,12 +530,14 @@ func (m *Manager) resetOpenFailureLog() {
 	m.openFailuresMuted = false
 }
 
-func (m *Manager) shouldLogConnectError(errMsg string) bool {
-	if strings.Contains(errMsg, "open USB serial port") {
-		m.mu.Lock()
-		muted := m.openFailuresMuted
-		m.mu.Unlock()
-		return !muted
+func (m *Manager) shouldLogConnectError(err error) bool {
+	if !errors.Is(err, errUSBOpenFailed) {
+		return true
 	}
-	return true
+
+	// It's an open failed error, log if not muted
+	m.mu.Lock()
+	muted := m.openFailuresMuted
+	m.mu.Unlock()
+	return !muted
 }
