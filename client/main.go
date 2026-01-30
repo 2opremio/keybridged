@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-const defaultHost = "localhost:8080"
+const defaultHost = "localhost:9876"
 
 type Client struct {
 	baseURL string

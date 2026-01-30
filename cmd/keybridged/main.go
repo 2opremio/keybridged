@@ -27,7 +27,7 @@ const (
 
 const (
 	defaultHost         = "localhost"
-	defaultPort         = 8080
+	defaultPort         = 9876
 	defaultSendTimeoutS = 2
 )
 
