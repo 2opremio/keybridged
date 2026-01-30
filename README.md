@@ -32,7 +32,7 @@ macOS deployment:
 Flags:
 
 - `-host` (default: `localhost`)
-- `-port` (default: `8080`)
+- `-port` (default: `9876`)
 - `-send-timeout` (default: `2`) seconds to wait when queueing an event
 - `-vid` (default: `0x1915`) USB VID for the **serial transport device**
 - `-pid` (default: `0x520F`) USB PID for the **serial transport device**
@@ -96,7 +96,7 @@ If there’s demand, we can add a WebSocket API for more efficient key-event str
 Send letter `A` (`a` (HID code 4) + `Shift`):
 
 ```
-curl -X POST "http://localhost:8080/pressandrelease" \
+curl -X POST "http://localhost:9876/pressandrelease" \
   -H "Content-Type: application/json" \
   -d '{"type":"keyboard","code":4,"modifiers":{"left_shift":true}}'
 ```
@@ -104,7 +104,7 @@ curl -X POST "http://localhost:8080/pressandrelease" \
 Hide/show iPad keyboard (AL Keyboard Layout / consumer usage 0x01AE):
 
 ```
-curl -X POST "http://localhost:8080/pressandrelease" \
+curl -X POST "http://localhost:9876/pressandrelease" \
   -H "Content-Type: application/json" \
   -d '{"type":"consumer","code":430}'
 ```
@@ -112,7 +112,7 @@ curl -X POST "http://localhost:8080/pressandrelease" \
 Play/Pause (consumer usage 0x00CD):
 
 ```
-curl -X POST "http://localhost:8080/pressandrelease" \
+curl -X POST "http://localhost:9876/pressandrelease" \
   -H "Content-Type: application/json" \
   -d '{"type":"consumer","code":205}'
 ```
@@ -120,7 +120,7 @@ curl -X POST "http://localhost:8080/pressandrelease" \
 Send only Apple Fn (modifier-only, no key):
 
 ```
-curl -X POST "http://localhost:8080/pressandrelease" \
+curl -X POST "http://localhost:9876/pressandrelease" \
   -H "Content-Type: application/json" \
   -d '{"type":"keyboard","code":0,"modifiers":{"apple_fn":true}}'
 ```
@@ -135,7 +135,7 @@ package main
 import "github.com/2opremio/keybridged/client"
 
 kbClient := client.New(client.Config{
-	Host: "localhost:8080",
+	Host: "localhost:9876",
 })
 err := kbClient.SendPressAndRelease(ctx, client.PressAndReleaseRequest{
 	Type: "keyboard",

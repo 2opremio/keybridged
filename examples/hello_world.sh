@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-HOST="${HOST:-http://localhost:8080}"
+HOST="${HOST:-http://localhost:9876}"
 
 send_key() {
   local code="$1"
